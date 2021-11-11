@@ -28,6 +28,8 @@ enum class CrmResourceType
     CRM_IPMC_ENTRY,
     CRM_SNAT_ENTRY,
     CRM_DNAT_ENTRY,
+    CRM_SRV6_MY_SID_ENTRY,
+    CRM_SRV6_NEXTHOP,
 };
 
 enum class CrmThresholdType

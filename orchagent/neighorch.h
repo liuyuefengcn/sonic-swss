@@ -72,6 +72,7 @@ public:
     void update(SubjectType, void *);
 
     void resolveNeighbor(const NeighborEntry &);
+    void updateSrv6Nexthop(const NextHopKey &, const sai_object_id_t &);
 
 private:
     PortsOrch *m_portsOrch;

@@ -12,6 +12,7 @@ public:
     NextHopGroupKey(const std::string &nexthops)
     {
         m_overlay_nexthops = false;
+        m_srv6_nexthops = false;
         auto nhv = tokenize(nexthops, NHG_DELIMITER);
         for (const auto &nh : nhv)
         {
@@ -20,14 +21,29 @@ public:
     }
 
     /* ip_string|if_alias|vni|router_mac separated by ',' */
-    NextHopGroupKey(const std::string &nexthops, bool overlay_nh)
+    NextHopGroupKey(const std::string &nexthops, bool overlay_nh, bool srv6_nh)
     {
-        m_overlay_nexthops = true;
-        auto nhv = tokenize(nexthops, NHG_DELIMITER);
-        for (const auto &nh_str : nhv)
+        if (overlay_nh)
         {
-            auto nh = NextHopKey(nh_str, overlay_nh);
-            m_nexthops.insert(nh);
+            m_overlay_nexthops = true;
+            m_srv6_nexthops = false;
+            auto nhv = tokenize(nexthops, NHG_DELIMITER);
+            for (const auto &nh_str : nhv)
+            {
+                auto nh = NextHopKey(nh_str, overlay_nh, srv6_nh);
+                m_nexthops.insert(nh);
+            }
+        }
+        else if (srv6_nh)
+        {
+            m_overlay_nexthops = false;
+            m_srv6_nexthops = true;
+            auto nhv = tokenize(nexthops, NHG_DELIMITER);
+            for (const auto &nh_str : nhv)
+            {
+                auto nh = NextHopKey(nh_str, overlay_nh, srv6_nh);
+                m_nexthops.insert(nh);
+            }
         }
     }
 
@@ -137,8 +153,8 @@ public:
             {
                 nhs_str += NHG_DELIMITER;
             }
-            if (m_overlay_nexthops) {
-                nhs_str += it->to_string(m_overlay_nexthops);
+            if (m_overlay_nexthops || m_srv6_nexthops) {
+                nhs_str += it->to_string(m_overlay_nexthops, m_srv6_nexthops);
             } else {
                 nhs_str += it->to_string();
             }
@@ -152,6 +168,11 @@ public:
         return m_overlay_nexthops;
     }
 
+    inline bool is_srv6_nexthop() const
+    {
+        return m_srv6_nexthops;
+    }
+
     void clear()
     {
         m_nexthops.clear();
@@ -160,6 +181,7 @@ public:
 private:
     std::set<NextHopKey> m_nexthops;
     bool m_overlay_nexthops;
+    bool m_srv6_nexthops;
 };
 
 #endif /* SWSS_NEXTHOPGROUPKEY_H */
