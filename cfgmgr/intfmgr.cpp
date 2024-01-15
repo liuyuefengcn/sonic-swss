@@ -446,6 +446,7 @@ bool IntfMgr::doIntfGeneralTask(const vector<string>& keys,
     string nat_zone = "";
     string proxy_arp = "";
     string grat_arp = "";
+    string ipv6_link_local_mode = "";
 
     for (auto idx : data)
     {
@@ -476,6 +477,10 @@ bool IntfMgr::doIntfGeneralTask(const vector<string>& keys,
         if (field == "nat_zone")
         {
             nat_zone = value;
+        }
+        else if (field == "ipv6_use_link_local_only")
+        {
+            ipv6_link_local_mode = value;
         }
     }
 
@@ -515,6 +520,13 @@ bool IntfMgr::doIntfGeneralTask(const vector<string>& keys,
             if (!nat_zone.empty())
             {
                 FieldValueTuple fvTuple("nat_zone", nat_zone);
+                data.push_back(fvTuple);
+            }
+			
+			/* Set ipv6 mode */
+            if (!ipv6_link_local_mode.empty())
+            {
+                FieldValueTuple fvTuple("ipv6_use_link_local_only", ipv6_link_local_mode);
                 data.push_back(fvTuple);
             }
         }
@@ -686,8 +698,8 @@ bool IntfMgr::doIntfAddrTask(const vector<string>& keys,
         std::vector<FieldValueTuple> fvVector;
         FieldValueTuple f("family", ip_prefix.isV4() ? IPV4_NAME : IPV6_NAME);
 
-        // Don't send link local config to AppDB and Orchagent
-        if (ip_prefix.getIp().getAddrScope() != IpAddress::AddrScope::LINK_SCOPE)
+        // Don't send ipv4 link local config to AppDB and Orchagent
+        if ((ip_prefix.isV4() == false) || (ip_prefix.getIp().getAddrScope() != IpAddress::AddrScope::LINK_SCOPE))
         {
             FieldValueTuple s("scope", "global");
             fvVector.push_back(s);
@@ -700,8 +712,8 @@ bool IntfMgr::doIntfAddrTask(const vector<string>& keys,
     {
         setIntfIp(alias, "del", ip_prefix);
 
-        // Don't send link local config to AppDB and Orchagent
-        if (ip_prefix.getIp().getAddrScope() != IpAddress::AddrScope::LINK_SCOPE)
+        // Don't send ipv4 link local config to AppDB and Orchagent
+        if ((ip_prefix.isV4() == false) || (ip_prefix.getIp().getAddrScope() != IpAddress::AddrScope::LINK_SCOPE))
         {
             m_appIntfTableProducer.del(appKey);
             m_stateIntfTable.del(keys[0] + state_db_key_delimiter + keys[1]);
